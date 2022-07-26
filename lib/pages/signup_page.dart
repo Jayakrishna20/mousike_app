@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:mousike_app/pages/home_page.dart';
@@ -12,6 +13,7 @@ class ScreenSignUp extends StatefulWidget {
 class _ScreenSignUpState extends State<ScreenSignUp> {
   final _passwordTextController = TextEditingController();
   final _emailTextController = TextEditingController();
+  final _phonenoTextController = TextEditingController();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -34,6 +36,8 @@ class _ScreenSignUpState extends State<ScreenSignUp> {
             ),
             const SizedBox(height: 10),
             TextFormField(
+              controller: _phonenoTextController,
+              maxLength: 10,
               decoration: const InputDecoration(hintText: 'Phone No'),
             ),
             const SizedBox(height: 10),
@@ -50,23 +54,36 @@ class _ScreenSignUpState extends State<ScreenSignUp> {
             const SizedBox(height: 10),
             ElevatedButton.icon(
               onPressed: () {
-                FirebaseAuth.instance
-                    .createUserWithEmailAndPassword(
-                  email: _emailTextController.text,
-                  password: _passwordTextController.text,
-                )
-                    .then((value) {
-                  print('Created New Account');
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (ctx) {
-                        return const HomePage();
-                      },
-                    ),
-                  );
-                }).onError((error, stackTrace) {
-                  print('Error ${error.toString()}');
-                });
+                try {
+                  FirebaseAuth.instance
+                      .createUserWithEmailAndPassword(
+                    email: _emailTextController.text,
+                    password: _passwordTextController.text,
+                  )
+                      .then((value) {
+                    sendDetails(
+                        email: _emailTextController.text,
+                        phoneno: _phonenoTextController.text);
+                    print('Created New Account');
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (ctx) {
+                          return const HomePage();
+                        },
+                      ),
+                    );
+                  }).onError((error, stackTrace) {
+                    print('Error ${error.toString()}');
+                  });
+                } on FirebaseAuthException catch (e) {
+                  if (e.code == 'weak-password') {
+                    print('The password provided is too weak.');
+                  } else if (e.code == 'email-already-in-use') {
+                    print('The account already exists for that email.');
+                  }
+                } catch (e) {
+                  print(e);
+                }
               },
               label: const Text(
                 'Create Account',
@@ -80,5 +97,19 @@ class _ScreenSignUpState extends State<ScreenSignUp> {
         ),
       ),
     );
+  }
+
+  Future sendDetails({required String email, required String phoneno}) async {
+    final db = FirebaseFirestore.instance;
+    // Create a new user with a first and last name
+    final user = <String, dynamic>{
+      "username": email,
+      "Phone no": phoneno,
+      "Created DateTime": DateTime.now()
+    };
+
+// Add a new document with a generated ID
+    db.collection("users").add(user).then((DocumentReference doc) =>
+        print('DocumentSnapshot added with ID: ${doc.id}'));
   }
 }

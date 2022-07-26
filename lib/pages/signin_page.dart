@@ -88,7 +88,8 @@ class _ScreenSignInState extends State<ScreenSignIn> {
         const Text("Don't have account?", style: TextStyle(color: Colors.blue)),
         GestureDetector(
           onTap: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ScreenSignUp()));
+            Navigator.push(context,
+                MaterialPageRoute(builder: (context) => const ScreenSignUp()));
           },
           child: const Text(
             "  Sign Up",

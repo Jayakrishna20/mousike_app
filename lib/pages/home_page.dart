@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:mousike_app/model/radio.dart';
 import 'package:mousike_app/pages/signin_page.dart';
 import 'package:mousike_app/utils/ai_util.dart';
+import 'package:tflite/tflite.dart';
 import 'package:velocity_x/velocity_x.dart';
 
 class HomePage extends StatefulWidget {
@@ -123,6 +124,51 @@ class _HomePageState extends State<HomePage> {
     setState(() {});
   }
 
+  CameraImage? cameraImage;
+  CameraController? cameraController;
+  String output = '';
+  _loadCamera() {
+    cameraController = CameraController(camera![0], ResolutionPreset.medium);
+    cameraController!.initialize().then((value) {
+      if (!mounted) {
+        return;
+      } else {
+        setState(() {
+          cameraController!.startImageStream((imageStream) {
+            cameraImage = imageStream;
+          });
+          _runModel();
+        });
+      }
+    });
+  }
+
+  _runModel() async {
+    if (cameraImage != null) {
+      var predictions = await Tflite.runModelOnFrame(
+          bytesList: cameraImage!.planes.map((planes) {
+            return planes.bytes;
+          }).toList(),
+          imageHeight: cameraImage!.height,
+          imageWidth: cameraImage!.width,
+          imageMean: 127.5,
+          imageStd: 127.5,
+          rotation: 90,
+          numResults: 2,
+          threshold: .1,
+          asynch: true);
+      predictions!.forEach((element) {
+        setState(() {
+          output = element['label'];
+        });
+      });
+    }
+  }
+
+  _loadModel() async {
+    await Tflite.loadModel(model: "assets/model.tflite", labels: "assets/labels.txt");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -131,6 +177,12 @@ class _HomePageState extends State<HomePage> {
           color: _selectedColor ?? AIColors.primaryColor2,
           child: radios != null
               ? [
+                  TextButton(
+                    child: const Text('join'),
+                    onPressed: () {
+                      print('hello');
+                    },
+                  ),
                   100.heightBox,
                   "All Channels".text.xl.white.semiBold.make().px16(),
                   20.heightBox,
@@ -140,10 +192,9 @@ class _HomePageState extends State<HomePage> {
                     children: radios!
                         .map((e) => ListTile(
                               leading: CircleAvatar(
-                                backgroundImage: NetworkImage(e.icon),
+                                backgroundImage: NetworkImage(e.url),
                               ),
                               title: "${e.name} ".text.white.make(),
-                              subtitle: e.tagline.text.white.make(),
                             ))
                         .toList(),
                   ).expand(),
@@ -197,6 +248,7 @@ class _HomePageState extends State<HomePage> {
                     primaryColor: Vx.purple300,
                     secondaryColor: Colors.white,
                   ),
+              leading: IconButton(onPressed: () {}, icon: Icon(Icons.camera_front_outlined)),
               backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: true,
