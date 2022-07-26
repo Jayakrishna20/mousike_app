@@ -138,10 +138,9 @@ class _HomePageState extends State<HomePage> {
                     children: radios!
                         .map((e) => ListTile(
                               leading: CircleAvatar(
-                                backgroundImage: NetworkImage(e.icon),
+                                backgroundImage: NetworkImage(e.url),
                               ),
                               title: "${e.name} ".text.white.make(),
-                              subtitle: e.tagline.text.white.make(),
                             ))
                         .toList(),
                   ).expand(),
