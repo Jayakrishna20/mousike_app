@@ -73,7 +73,3 @@ dependencies {
     implementation 'com.google.firebase:firebase-analytics'
 }
 
-aaptOptions {
-        noCompress 'tflite'
-        noCompress 'lite'
-    }
