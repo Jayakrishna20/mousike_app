@@ -72,3 +72,8 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:30.2.0')
     implementation 'com.google.firebase:firebase-analytics'
 }
+
+aaptOptions {
+        noCompress 'tflite'
+        noCompress 'lite'
+    }
